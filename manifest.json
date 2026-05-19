@@ -1,0 +1,30 @@
+{
+  "name": "Ателье Инари",
+  "short_name": "Инари",
+  "description": "Индивидуальный пошив одежды в Воронеже. ул. 9 Января, 233/20.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14110D",
+  "theme_color": "#14110D",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "favicon-16x16 (2).png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon-32x32 (2).png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "apple-touch-icon (2).png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

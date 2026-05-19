@@ -6,10 +6,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="description" content="Ателье Инари в Воронеже. Индивидуальный пошив одежды, подгонка, ремонт, реставрация. Опытный мастер. Рейтинг 4.9. ул. 9 Января, 233/20. ☎ +7 (958) 418-24-63" />
 <meta name="keywords" content="ателье воронеж, пошив одежды воронеж, ателье инари, индивидуальный пошив, подгонка одежды воронеж, ремонт одежды 9 января" />
+<meta name="robots" content="index, follow" />
+<meta name="theme-color" content="#14110D" />
+<meta name="color-scheme" content="dark" />
+<link rel="canonical" href="https://inari-atelier.ru/" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://inari-atelier.ru/" />
+<meta property="og:site_name" content="Ателье Инари" />
+<meta property="og:locale" content="ru_RU" />
+<meta property="og:title" content="Ателье Инари — индивидуальный пошив в Воронеже" />
+<meta property="og:description" content="Создаём одежду по вашим меркам, мечтам и характеру. Пошив, ремонт, подгонка. Рейтинг 4.9 на Яндекс Картах. ул. 9 Января, 233/20." />
+<meta property="og:image" content="https://inari-atelier.ru/XXXL.webp" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Ателье Инари — место, где рождается вещь" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Ателье Инари — индивидуальный пошив в Воронеже" />
+<meta name="twitter:description" content="Создаём одежду по вашим меркам, мечтам и характеру. Рейтинг 4.9. ул. 9 Января, 233/20." />
+<meta name="twitter:image" content="https://inari-atelier.ru/XXXL.webp" />
+
+<!-- Favicons -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32%20(2).png" />
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16%20(2).png" />
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon%20(2).png" />
+<link rel="manifest" href="manifest.json" />
+
+<!-- Preload critical resources -->
+<link rel="preload" as="image" href="hero.avif" type="image/avif" fetchpriority="high" />
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" />
+
+<!-- DNS prefetch for external services -->
+<link rel="dns-prefetch" href="https://yandex.ru" />
+<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
@@ -86,7 +119,7 @@
   .nav {
     position: fixed;
     top: 0; left: 0; right: 0;
-    z-index: 50;
+    z-index: 60;
     padding: 22px 48px;
     display: flex;
     align-items: center;
@@ -109,9 +142,12 @@
     gap: 10px;
   }
   .logo-img {
-    height: 36px;
+    height: 54px;
     width: auto;
     display: block;
+  }
+  @media (max-width: 880px) {
+    .logo-img { height: 36px; }
   }
   .foot-logo-img {
     height: 40px;
@@ -159,6 +195,7 @@
     border: none;
     background: none;
     color: inherit;
+    position: relative;
     z-index: 60;
   }
   .nav-burger span {
@@ -287,13 +324,13 @@
   }
   .hero-title {
     font-family: var(--serif);
-    font-weight: 300;
-    font-size: clamp(58px, 11vw, 168px);
+    font-weight: 500;
+    font-size: clamp(87px, 16.5vw, 252px);
     line-height: 0.92;
     letter-spacing: -0.02em;
     text-wrap: balance;
   }
-  .hero-title .it { font-style: italic; font-weight: 300; color: var(--gold); }
+  .hero-title .it { font-style: italic; font-weight: 500; color: var(--gold); }
   .hero-sub {
     font-family: var(--serif);
     font-style: italic;
@@ -693,19 +730,18 @@
   .gal-item:hover .gal-cap { opacity: 1; transform: translateY(0); }
 
   /*
-    Раскладка 8 фото (симметрично):
+    Раскладка 7 фото (симметрично):
     Строка 1-2: большой левый [gal-1] + два маленьких справа [gal-2, gal-3]
-    Строка 3:   три равных [gal-4, gal-5, gal-6]
-    Строка 4:   маленький [gal-7] + широкий правый [gal-8]
+    Строка 3:   широкий левый [gal-4] + правый [gal-5]
+    Строка 4:   маленький [gal-6] + широкий правый [gal-7]
   */
   .gal-1 { grid-column: 1 / 3; grid-row: 1 / 3; }
   .gal-2 { grid-column: 3;     grid-row: 1;     }
   .gal-3 { grid-column: 3;     grid-row: 2;     }
-  .gal-4 { grid-column: 1;     grid-row: 3;     }
-  .gal-5 { grid-column: 2;     grid-row: 3;     }
-  .gal-6 { grid-column: 3;     grid-row: 3;     }
-  .gal-7 { grid-column: 1;     grid-row: 4;     }
-  .gal-8 { grid-column: 2 / 4; grid-row: 4;     }
+  .gal-4 { grid-column: 1 / 3; grid-row: 3;     }
+  .gal-5 { grid-column: 3;     grid-row: 3;     }
+  .gal-6 { grid-column: 1;     grid-row: 4;     }
+  .gal-7 { grid-column: 2 / 4; grid-row: 4;     }
 
   @media (max-width: 880px) {
     .gal-grid {
@@ -715,7 +751,7 @@
       gap: 4px;
     }
     .gal-1, .gal-2, .gal-3, .gal-4,
-    .gal-5, .gal-6, .gal-7, .gal-8 { grid-column: span 1; grid-row: span 1; }
+    .gal-5, .gal-6, .gal-7 { grid-column: span 1; grid-row: span 1; }
     .gal-1 { grid-column: span 2; grid-row: span 2; }
   }
   @media (max-width: 480px) {
@@ -1148,7 +1184,7 @@
       </div>
       <div class="hero-meta heroFade">
         <div>Est. <span class="gold">MMXIV</span></div>
-        <div>Воронеж · 9 Января, 233</div>
+        <div>Улица 9 Января · 233/20</div>
         <div>Ателье · Воронеж</div>
       </div>
     </div>
@@ -1287,7 +1323,7 @@
         </div>
       </div>
       <div class="process-figure reveal d2">
-        <img src="XXXL%20(1).webp" alt="Швейная машина мастерской" />
+        <img src="XXXL%20(1).webp" alt="Швейная машина мастерской" loading="lazy" decoding="async" />
         <div class="frame"></div>
         <div class="stamp">— Workshop · Воронеж</div>
       </div>
@@ -1305,36 +1341,32 @@
   </div>
   <div class="gal-grid">
     <div class="gal-item gal-1 reveal">
-      <img src="XXXL%20(2).webp" alt="Швейная машина Bruce" />
-      <div class="gal-cap">— Bruce · рабочая лошадка</div>
+      <img src="XXXL.webp" alt="Ателье Инари" loading="lazy" decoding="async" />
+      <div class="gal-cap">— Место, где рождается вещь</div>
     </div>
     <div class="gal-item gal-2 reveal d1">
-      <img src="XXXL%20(5).webp" alt="Работа мастерской" />
+      <img src="XXXL%20(5).webp" alt="Детали кроя — Ателье Инари" loading="lazy" decoding="async" />
       <div class="gal-cap">— Детали кроя</div>
     </div>
     <div class="gal-item gal-3 reveal d2">
-      <img src="XXXL%20(9).webp" alt="Работа мастерской" />
+      <img src="XXXL%20(9).webp" alt="Ручная работа — Ателье Инари" loading="lazy" decoding="async" />
       <div class="gal-cap">— Ручная работа</div>
     </div>
     <div class="gal-item gal-4 reveal d1">
-      <img src="XXXL%20(11).webp" alt="Работа мастерской" />
-      <div class="gal-cap">— Пошив на заказ</div>
-    </div>
-    <div class="gal-item gal-5 reveal d2">
-      <img src="XXXL%20(14).webp" alt="Работа мастерской" />
+      <img src="XXXL%20(14).webp" alt="Подгонка по фигуре — Ателье Инари" loading="lazy" decoding="async" />
       <div class="gal-cap">— Подгонка по фигуре</div>
     </div>
-    <div class="gal-item gal-6 reveal d3">
-      <img src="XXXL%20(15).webp" alt="Работа мастерской" />
+    <div class="gal-item gal-5 reveal d2">
+      <img src="XXXL%20(15).webp" alt="Ткани и материалы — Ателье Инари" loading="lazy" decoding="async" />
       <div class="gal-cap">— Ткани и материалы</div>
     </div>
-    <div class="gal-item gal-7 reveal d1">
-      <img src="XXXL%20(17).webp" alt="Работа мастерской" />
+    <div class="gal-item gal-6 reveal d1">
+      <img src="XXXL%20(17).webp" alt="Мастерская Инари" loading="lazy" decoding="async" />
       <div class="gal-cap">— Мастерская Инари</div>
     </div>
-    <div class="gal-item gal-8 reveal d2">
-      <img src="XXXL.webp" alt="Ателье Инари" />
-      <div class="gal-cap">— Место, где рождается вещь</div>
+    <div class="gal-item gal-7 reveal d2">
+      <img src="XXXL%20(2).webp" alt="Швейная машина Bruce — Ателье Инари" loading="lazy" decoding="async" />
+      <div class="gal-cap">— Bruce · рабочая лошадка</div>
     </div>
   </div>
 </section>
