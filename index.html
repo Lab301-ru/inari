@@ -36,17 +36,37 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon%20(2).png" />
 <link rel="manifest" href="manifest.json" />
 
-<!-- Preload critical resources -->
+<!-- Preload LCP image — высший приоритет -->
 <link rel="preload" as="image" href="hero.avif" type="image/avif" fetchpriority="high" />
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" />
 
-<!-- DNS prefetch for external services -->
+<!-- DNS prefetch / preconnect -->
 <link rel="dns-prefetch" href="https://yandex.ru" />
-<link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+<!-- Google Fonts — не блокирует рендер (media=print trick) -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" media="print" onload="this.media='all'" />
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" /></noscript>
 <style>
+  /* Системные fallback-шрифты до загрузки Google Fonts */
+  @font-face {
+    font-family: "Cormorant Garamond";
+    font-style: normal;
+    font-weight: 300 500;
+    font-display: swap;
+    src: local("Georgia"), local("Times New Roman");
+    size-adjust: 105%;
+  }
+  @font-face {
+    font-family: "Manrope";
+    font-style: normal;
+    font-weight: 300 600;
+    font-display: swap;
+    src: local("Segoe UI"), local("Helvetica Neue"), local("Arial");
+    size-adjust: 100%;
+  }
+
   :root {
     --milk: #F4F1EA;
     --milk-2: #ECE7DC;
@@ -291,9 +311,10 @@
   .hero-img {
     position: absolute;
     inset: 0;
-    background-image: url("hero.avif");
-    background-size: cover;
-    background-position: 55% 30%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 55% 30%;
     filter: grayscale(1) contrast(1.05) brightness(0.78);
     z-index: 1;
     transform: scale(1.02);
@@ -1167,7 +1188,7 @@
 
 <!-- HERO -->
 <header class="hero" id="top">
-  <div class="hero-img"></div>
+  <img class="hero-img" src="hero.avif" alt="" fetchpriority="high" decoding="sync" aria-hidden="true" />
   <span class="hero-vstamp heroFade">Воронеж · с 2014 · ручная работа</span>
   <div class="wrap hero-inner">
     <div class="hero-grid">
@@ -1535,6 +1556,7 @@
 
 <script>
   // Burger menu
+  // ── Burger — критично, вешаем сразу ──
   const burger = document.getElementById('burger');
   const navMobile = document.getElementById('navMobile');
   burger.addEventListener('click', () => {
@@ -1554,30 +1576,30 @@
     }
   });
 
-  // Nav scroll state
+  // ── Nav scroll — критично ──
   const nav = document.getElementById('nav');
   const onScroll = () => {
-    if (window.scrollY > 30) nav.classList.add('scrolled');
-    else nav.classList.remove('scrolled');
+    nav.classList.toggle('scrolled', window.scrollY > 30);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  // Reveal on scroll
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.classList.add('in');
-        io.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  // ── Всё некритичное — через requestIdleCallback ──
+  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1));
+  idle(() => {
+    // Reveal on scroll
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-  // Highlight today's hours row
-  const today = new Date().getDay();
-  const row = document.querySelector(`#hours tr[data-day="${today}"]`);
-  if (row) row.classList.add('today');
+    // Highlight today's hours row
+    const today = new Date().getDay();
+    const row = document.querySelector(`#hours tr[data-day="${today}"]`);
+    if (row) row.classList.add('today');
+  });
 </script>
 
 </body>
