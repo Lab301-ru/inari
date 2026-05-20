@@ -1592,7 +1592,7 @@
     const carTrack = document.getElementById('carouselTrack');
     if (carWrap && carTrack) {
       let offset     = 0;
-      const SPEED    = window.innerWidth <= 768 ? 0.3 : 0.6;
+      const SPEED    = 0.6;          // px/frame
       let isPaused   = false;
       let isDragging = false;
       let dragStartX = 0;
