@@ -721,6 +721,7 @@
     user-select: none;
     -webkit-user-select: none;
     margin-top: 48px;
+    touch-action: pan-y; /* браузер обрабатывает вертикальный скролл, JS — горизонтальный */
   }
   .carousel-wrap.is-dragging { cursor: grabbing; }
   .carousel-track {
@@ -1591,29 +1592,31 @@
     const carWrap  = document.getElementById('carouselWrap');
     const carTrack = document.getElementById('carouselTrack');
     if (carWrap && carTrack) {
-      let offset     = 0;
-      const SPEED    = 0.6;          // px/frame
-      let isPaused   = false;
-      let isDragging = false;
-      let dragStartX = 0;
-      let dragStartOffset = 0;
+      const PX_PER_SEC = 60; // скорость: 60px/сек на любом fps
+      let offset       = 0;
+      let lastTs       = null;
+      let isPaused     = false;
+      let isDragging   = false;
+      let dragStartX   = 0;
+      let dragStartY   = 0;
+      let dragStartOff = 0;
+      let isHorizDrag  = null; // определяем направление жеста
+      let clickPaused  = false;
 
-      function getSetWidth() {
-        return carTrack.scrollWidth / 2;   // половина — первый сет
-      }
+      // Кэшируем половину ширины — избегаем scrollWidth каждый кадр (layout thrashing)
+      let halfW = carTrack.scrollWidth / 2;
+      window.addEventListener('resize', () => { halfW = carTrack.scrollWidth / 2; });
+      function wrap(v) { if (!halfW) return 0; return ((v % halfW) + halfW) % halfW; }
 
-      function clampOffset(v) {
-        const w = getSetWidth();
-        return ((v % w) + w) % w;
-      }
-
-      (function tick() {
-        if (!isPaused && !isDragging) {
-          offset = clampOffset(offset + SPEED);
+      function tick(ts) {
+        if (lastTs !== null && !isPaused && !isDragging) {
+          offset = wrap(offset + PX_PER_SEC * (ts - lastTs) / 1000);
         }
+        lastTs = ts;
         carTrack.style.transform = `translateX(${-offset}px)`;
         requestAnimationFrame(tick);
-      })();
+      }
+      requestAnimationFrame(tick);
 
       // Hover — пауза
       carWrap.addEventListener('mouseenter', () => { isPaused = true; });
@@ -1622,37 +1625,49 @@
       // Mouse drag
       carWrap.addEventListener('mousedown', (e) => {
         isDragging = true; isPaused = true;
-        dragStartX = e.pageX; dragStartOffset = offset;
+        dragStartX = e.pageX; dragStartOff = offset;
         carWrap.classList.add('is-dragging');
       });
       document.addEventListener('mousemove', (e) => {
         if (!isDragging) return;
-        offset = clampOffset(dragStartOffset + (dragStartX - e.pageX));
+        offset = wrap(dragStartOff + (dragStartX - e.pageX));
       });
       document.addEventListener('mouseup', () => {
         if (!isDragging) return;
-        isDragging = false; isPaused = false;
+        isDragging = false;
+        isPaused = clickPaused;
         carWrap.classList.remove('is-dragging');
       });
 
-      // Touch drag
+      // Touch drag — только горизонталь, вертикаль отдаём браузеру
       carWrap.addEventListener('touchstart', (e) => {
+        dragStartX   = e.touches[0].pageX;
+        dragStartY   = e.touches[0].pageY;
+        dragStartOff = offset;
+        isHorizDrag  = null;
+      }, { passive: true });
+
+      carWrap.addEventListener('touchmove', (e) => {
+        const dx = e.touches[0].pageX - dragStartX;
+        const dy = e.touches[0].pageY - dragStartY;
+        if (isHorizDrag === null) {
+          isHorizDrag = Math.abs(dx) > Math.abs(dy);
+        }
+        if (!isHorizDrag) return; // вертикальный скролл — браузер обрабатывает через touch-action: pan-y
         isDragging = true; isPaused = true;
-        dragStartX = e.touches[0].pageX; dragStartOffset = offset;
-      }, { passive: true });
-      document.addEventListener('touchmove', (e) => {
-        if (!isDragging) return;
-        offset = clampOffset(dragStartOffset + (dragStartX - e.touches[0].pageX));
-      }, { passive: true });
-      document.addEventListener('touchend', () => {
-        isDragging = false; isPaused = false;
+        offset = wrap(dragStartOff - dx);
+      }, { passive: true }); // passive: true — нет latency, touch-action берёт на себя управление скроллом
+
+      carWrap.addEventListener('touchend', () => {
+        isDragging  = false;
+        isHorizDrag = null;
+        isPaused    = clickPaused;
       });
 
       // Клик — пауза/возобновление
-      let clickPaused = false;
       carWrap.addEventListener('click', () => {
         clickPaused = !clickPaused;
-        isPaused = clickPaused;
+        isPaused    = clickPaused;
       });
     }
   });
