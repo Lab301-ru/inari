@@ -18,16 +18,17 @@
 <meta property="og:locale" content="ru_RU" />
 <meta property="og:title" content="Ателье Инари — ремонт и подгонка одежды в Воронеже" />
 <meta property="og:description" content="Укоротим, ушьём, заменим молнию, починим сумку. Быстро и аккуратно. Рейтинг 4.9 на Яндекс Картах. ул. 9 Января, 233/20." />
-<meta property="og:image" content="https://inari-atelier.ru/og-image.png" />
+<meta property="og:image" content="https://inari-atelier.ru/og-image.jpg" />
 <meta property="og:image:width" content="1366" />
-<meta property="og:image:height" content="768" />
+<meta property="og:image:height" content="762" />
+<meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:alt" content="Ателье Инари — индивидуальный пошив в Воронеже" />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Ателье Инари — ремонт и подгонка одежды в Воронеже" />
 <meta name="twitter:description" content="Укоротим, ушьём, заменим молнию, починим сумку. Быстро и аккуратно. Рейтинг 4.9. ул. 9 Января, 233/20." />
-<meta name="twitter:image" content="https://inari-atelier.ru/og-image.png" />
+<meta name="twitter:image" content="https://inari-atelier.ru/og-image.jpg" />
 
 <!-- Favicons -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
@@ -36,8 +37,11 @@
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon%20(2).png" />
 <link rel="manifest" href="manifest.json" />
 
-<!-- Preload LCP image — высший приоритет -->
-<link rel="preload" as="image" href="hero.avif" type="image/avif" fetchpriority="high" />
+<!-- Preload LCP image — responsive (mobile берёт hero-mobile.avif ~14KB, desktop 32KB) -->
+<link rel="preload" as="image" href="hero.avif" imagesrcset="hero-mobile.avif 880w, hero.avif 1600w" imagesizes="100vw" type="image/avif" fetchpriority="high" />
+
+<!-- Main JS — defer: грузится параллельно с HTML, выполняется после парсинга -->
+<script src="app.js" defer></script>
 
 <!-- DNS prefetch / preconnect -->
 <link rel="dns-prefetch" href="https://yandex.ru" />
@@ -45,9 +49,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
 <!-- Google Fonts — не блокирует рендер (media=print trick) -->
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" media="print" onload="this.media='all'" />
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" /></noscript>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Manrope:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Manrope:wght@400;500&display=swap" media="print" onload="this.media='all'" />
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Manrope:wght@400;500&display=swap" /></noscript>
 <style>
   /* Системные fallback-шрифты до загрузки Google Fonts */
   @font-face {
@@ -728,6 +732,8 @@
     display: flex;
     gap: 6px;
     width: max-content;
+    /* CLS prevention: резервируем высоту до того как JS добавит элементы */
+    min-height: clamp(220px, 28vw, 420px);
     will-change: transform;
   }
   .car-item {
@@ -1099,6 +1105,69 @@
   .svc-cta-btn.primary:hover { background: #b8943a; border-color: #b8943a; }
   .svc-cta-btn.outline { border: 1px solid rgba(244,241,234,0.45); color: rgba(244,241,234,0.8); }
   .svc-cta-btn.outline:hover { border-color: var(--milk); color: var(--milk); }
+
+  /* ──────── PERFORMANCE: content-visibility ────────
+     Браузер пропускает рендеринг секций пока они не вошли в viewport.
+     contain-intrinsic-size резервирует место — нет CLS. */
+  .values,
+  .services,
+  .process,
+  .gallery,
+  .reviews,
+  .cta-section,
+  .contacts,
+  .faq,
+  footer {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 900px;
+  }
+
+  /* ──────── MOBILE PERFORMANCE OVERRIDES ────────
+     Тяжёлые эффекты убираем для устройств <= 880px:
+     filter, backdrop-filter, длинные анимации — дорогие на mobile GPU. */
+  @media (max-width: 880px) {
+    .hero-img {
+      animation: none;
+      transform: none;
+      /* убираем CSS filter — LCP быстрее, ::after-градиент даёт затемнение */
+      filter: brightness(0.7);
+    }
+    .nav.scrolled {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: rgba(250,248,243,0.97);
+    }
+    .car-item img {
+      filter: none;
+      transition: none;
+    }
+    .process-figure img {
+      filter: brightness(0.95);
+      transition: none;
+    }
+    .process-figure:hover img { transform: none; }
+    .svc {
+      transition: none;
+    }
+    .svc:hover { padding-left: 0; padding-right: 0; }
+    /* Уменьшаем тяжелые reveal-задержки */
+    .reveal {
+      transition-duration: 700ms;
+    }
+  }
+
+  /* ──────── PREFERS-REDUCED-MOTION ────────
+     Полное уважение к настройке "уменьшить движение" */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .hero-img { animation: none; transform: none; }
+    .reveal { opacity: 1; transform: none; }
+  }
 </style>
 <script type="application/ld+json">
 {
@@ -1129,7 +1198,7 @@
 <!-- NAV -->
 <nav class="nav" id="nav">
   <a href="#top" class="logo">
-    <img src="logo.svg" alt="Ателье Инари" class="logo-img" />
+    <img src="logo.svg" alt="Ателье Инари" class="logo-img" width="620" height="200" />
   </a>
   <div class="nav-links">
     <a href="#about">О ателье</a>
@@ -1160,7 +1229,10 @@
 
 <!-- HERO -->
 <header class="hero" id="top">
-  <img class="hero-img" src="hero.avif" alt="" fetchpriority="high" decoding="sync" aria-hidden="true" />
+  <picture>
+    <source media="(max-width: 880px)" srcset="hero-mobile.avif" type="image/avif" />
+    <img class="hero-img" src="hero.avif" width="1366" height="768" alt="" fetchpriority="high" decoding="async" aria-hidden="true" />
+  </picture>
   <span class="hero-vstamp heroFade">Воронеж · с 2014 · ручная работа</span>
   <div class="wrap hero-inner">
     <div class="hero-grid">
@@ -1316,7 +1388,7 @@
         </div>
       </div>
       <div class="process-figure reveal d2">
-        <img src="XXXL%20(1).webp" alt="Швейная машина мастерской" loading="lazy" decoding="async" />
+        <img src="XXXL%20(1).webp" alt="Швейная машина мастерской" loading="lazy" decoding="async" width="800" height="800" />
         <div class="frame"></div>
         <div class="stamp">— Workshop · Воронеж</div>
       </div>
@@ -1332,51 +1404,10 @@
       <h2 class="reveal d1">Избранные работы <span class="it">мастерской.</span></h2>
     </div>
   </div>
-  <!-- Карусель: 20 фото × 2 (дубль для бесшовной петли) -->
+  <!-- Карусель: items генерируются в app.js при попадании секции в viewport.
+       Это убирает 20 предзагрузок (~1.2MB) с initial load. SEO: schema.org image выше. -->
   <div class="carousel-wrap" id="carouselWrap">
-    <div class="carousel-track" id="carouselTrack">
-      <div class="car-item"><img src="XXXL.webp" alt="Ателье Инари" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(1).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(2).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(3).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(4).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(5).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(6).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(7).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(8).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(9).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(10).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(11).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(12).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(13).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(14).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(15).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(16).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(17).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(19).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <div class="car-item"><img src="XXXL%20(20).webp" alt="Работа мастерской" loading="lazy" decoding="async" /></div>
-      <!-- дубль для бесшовной петли -->
-      <div class="car-item" aria-hidden="true"><img src="XXXL.webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(1).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(2).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(3).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(4).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(5).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(6).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(7).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(8).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(9).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(10).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(11).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(12).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(13).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(14).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(15).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(16).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(17).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(19).webp" alt="" loading="lazy" decoding="async" /></div>
-      <div class="car-item" aria-hidden="true"><img src="XXXL%20(20).webp" alt="" loading="lazy" decoding="async" /></div>
-    </div>
+    <div class="carousel-track" id="carouselTrack"></div>
   </div>
 </section>
 
@@ -1474,9 +1505,11 @@
     </div>
     <div class="ymap-wrap reveal" style="margin-top: 64px;">
       <iframe
-        src="https://yandex.ru/map-widget/v1/?ll=39.123472%2C51.680375&z=17&pt=39.123472,51.680375,pm2rdm"
+        id="ymap"
+        data-src="https://yandex.ru/map-widget/v1/?ll=39.123472%2C51.680375&z=17&pt=39.123472,51.680375,pm2rdm"
         width="100%" height="400" frameborder="0"
-        style="border-radius: 8px; display: block; border: none;"
+        loading="lazy"
+        style="border-radius: 8px; display: block; border: none; background: var(--milk-2);"
         title="Ателье Инари на карте"></iframe>
       <div style="margin-top: 24px; text-align: center;">
         <a class="route-btn" href="https://yandex.ru/maps/org/inari/100336896363/" target="_blank" rel="noopener">
@@ -1527,7 +1560,7 @@
 <footer>
   <div class="wrap">
     <div class="foot-top">
-      <div class="foot-logo"><img src="logo.svg" alt="Ателье Инари" class="foot-logo-img" /></div>
+      <div class="foot-logo"><img src="logo.svg" alt="Ателье Инари" class="foot-logo-img" width="620" height="200" /></div>
       <div class="foot-tag">Инари — мастерская,<br /><em>которой доверяют.</em></div>
       <div class="foot-links">
         <a href="https://vk.com/lidiaparinova" target="_blank" rel="noopener">ВКонтакте</a>
@@ -1541,137 +1574,6 @@
     </div>
   </div>
 </footer>
-
-<script>
-  // Burger menu
-  // ── Burger — критично, вешаем сразу ──
-  const burger = document.getElementById('burger');
-  const navMobile = document.getElementById('navMobile');
-  burger.addEventListener('click', () => {
-    document.body.classList.toggle('menu-open');
-    navMobile.setAttribute('aria-hidden', document.body.classList.contains('menu-open') ? 'false' : 'true');
-  });
-  navMobile.querySelectorAll('a').forEach(a => {
-    a.addEventListener('click', () => {
-      document.body.classList.remove('menu-open');
-      navMobile.setAttribute('aria-hidden', 'true');
-    });
-  });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      document.body.classList.remove('menu-open');
-      navMobile.setAttribute('aria-hidden', 'true');
-    }
-  });
-
-  // ── Nav scroll — критично ──
-  const nav = document.getElementById('nav');
-  const onScroll = () => {
-    nav.classList.toggle('scrolled', window.scrollY > 30);
-  };
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
-
-  // ── Всё некритичное — через requestIdleCallback ──
-  const idle = window.requestIdleCallback || (cb => setTimeout(cb, 1));
-  idle(() => {
-    // Reveal on scroll
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
-      });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-
-    // Highlight today's hours row
-    const today = new Date().getDay();
-    const row = document.querySelector(`#hours tr[data-day="${today}"]`);
-    if (row) row.classList.add('today');
-
-    // ── Карусель ──
-    const carWrap  = document.getElementById('carouselWrap');
-    const carTrack = document.getElementById('carouselTrack');
-    if (carWrap && carTrack) {
-      const PX_PER_SEC = 60; // скорость: 60px/сек на любом fps
-      let offset       = 0;
-      let lastTs       = null;
-      let isPaused     = false;
-      let isDragging   = false;
-      let dragStartX   = 0;
-      let dragStartY   = 0;
-      let dragStartOff = 0;
-      let isHorizDrag  = null; // определяем направление жеста
-      let clickPaused  = false;
-
-      // Кэшируем половину ширины — избегаем scrollWidth каждый кадр (layout thrashing)
-      let halfW = carTrack.scrollWidth / 2;
-      window.addEventListener('resize', () => { halfW = carTrack.scrollWidth / 2; });
-      function wrap(v) { if (!halfW) return 0; return ((v % halfW) + halfW) % halfW; }
-
-      function tick(ts) {
-        if (lastTs !== null && !isPaused && !isDragging) {
-          offset = wrap(offset + PX_PER_SEC * (ts - lastTs) / 1000);
-        }
-        lastTs = ts;
-        carTrack.style.transform = `translateX(${-offset}px)`;
-        requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-
-      // Hover — пауза
-      carWrap.addEventListener('mouseenter', () => { isPaused = true; });
-      carWrap.addEventListener('mouseleave', () => { if (!isDragging) isPaused = false; });
-
-      // Mouse drag
-      carWrap.addEventListener('mousedown', (e) => {
-        isDragging = true; isPaused = true;
-        dragStartX = e.pageX; dragStartOff = offset;
-        carWrap.classList.add('is-dragging');
-      });
-      document.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        offset = wrap(dragStartOff + (dragStartX - e.pageX));
-      });
-      document.addEventListener('mouseup', () => {
-        if (!isDragging) return;
-        isDragging = false;
-        isPaused = clickPaused;
-        carWrap.classList.remove('is-dragging');
-      });
-
-      // Touch drag — только горизонталь, вертикаль отдаём браузеру
-      carWrap.addEventListener('touchstart', (e) => {
-        dragStartX   = e.touches[0].pageX;
-        dragStartY   = e.touches[0].pageY;
-        dragStartOff = offset;
-        isHorizDrag  = null;
-      }, { passive: true });
-
-      carWrap.addEventListener('touchmove', (e) => {
-        const dx = e.touches[0].pageX - dragStartX;
-        const dy = e.touches[0].pageY - dragStartY;
-        if (isHorizDrag === null) {
-          isHorizDrag = Math.abs(dx) > Math.abs(dy);
-        }
-        if (!isHorizDrag) return; // вертикальный скролл — браузер обрабатывает через touch-action: pan-y
-        isDragging = true; isPaused = true;
-        offset = wrap(dragStartOff - dx);
-      }, { passive: true }); // passive: true — нет latency, touch-action берёт на себя управление скроллом
-
-      carWrap.addEventListener('touchend', () => {
-        isDragging  = false;
-        isHorizDrag = null;
-        isPaused    = clickPaused;
-      });
-
-      // Клик — пауза/возобновление
-      carWrap.addEventListener('click', () => {
-        clickPaused = !clickPaused;
-        isPaused    = clickPaused;
-      });
-    }
-  });
-</script>
 
 </body>
 </html>
