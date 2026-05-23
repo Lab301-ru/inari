@@ -142,7 +142,7 @@ idle(() => {
   }
 
   function startRaf() {
-    if (rafId !== null || reducedMotion) return;
+    if (rafId !== null) return;
     lastTs = null;
     rafId = requestAnimationFrame(tick);
   }
@@ -153,24 +153,48 @@ idle(() => {
     lastTs = null;
   }
 
+  function measureHalf() {
+    const w = carTrack.scrollWidth / 2;
+    if (w > 0) halfW = w;
+  }
   function init() {
     if (inited) return;
     inited = true;
     buildCarousel();
-    // halfW считаем после того как DOM добавлен и браузер успел layout
-    requestAnimationFrame(() => {
-      halfW = carTrack.scrollWidth / 2;
+    // Layout пройден к этому моменту, но scrollWidth может вернуть 0
+    // если первый кадр ещё не отрисован — пробуем повторно через RAF.
+    measureHalf();
+    requestAnimationFrame(measureHalf);
+    // После загрузки первых изображений размеры точно стабилизируются
+    carTrack.querySelectorAll('img').forEach(img => {
+      if (!img.complete) img.addEventListener('load', measureHalf, { once: true, passive: true });
     });
-    window.addEventListener('resize', () => { halfW = carTrack.scrollWidth / 2; }, { passive: true });
+    window.addEventListener('resize', measureHalf, { passive: true });
   }
 
-  // Ленивый старт — только когда галерея видна, и пауза при уходе
+  // Ленивый старт + пауза вне viewport — через IntersectionObserver
   const visObs = new IntersectionObserver((entries) => {
     isVisible = entries[0].isIntersecting;
     if (isVisible) { init(); if (!document.hidden) startRaf(); }
     else { stopRaf(); }
-  }, { rootMargin: '200px' });
+  }, { rootMargin: '400px' });
   visObs.observe(carWrap);
+
+  // Страховка: на некоторых iOS Safari IO внутри content-visibility:auto
+  // может задержаться или не сработать. Проверяем bounding rect по скроллу.
+  function checkVisibility() {
+    if (inited && isVisible) return;
+    const r = carWrap.getBoundingClientRect();
+    const nearViewport = r.top < innerHeight + 400 && r.bottom > -400;
+    if (nearViewport) {
+      isVisible = true;
+      init();
+      if (!document.hidden) startRaf();
+    }
+  }
+  window.addEventListener('scroll', checkVisibility, { passive: true });
+  // И один раз при загрузке — на случай если галерея уже в viewport (anchor link, рестор скролла)
+  checkVisibility();
 
   // Пауза на скрытой вкладке (экономия батареи)
   document.addEventListener('visibilitychange', () => {
@@ -178,13 +202,18 @@ idle(() => {
     else if (isVisible && inited) startRaf();
   });
 
+  // Применить позицию мгновенно (без ожидания tick) — для отзывчивого drag
+  function applyOffset() {
+    carTrack.style.transform = `translate3d(${-offset}px,0,0)`;
+  }
+
   // Hover
-  carWrap.addEventListener('mouseenter', () => { init(); isPaused = true; });
+  carWrap.addEventListener('mouseenter', () => { init(); startRaf(); isPaused = true; });
   carWrap.addEventListener('mouseleave', () => { if (!isDragging) isPaused = false; });
 
   // Mouse drag
   carWrap.addEventListener('mousedown', (e) => {
-    init();
+    init(); startRaf();
     isDragging = true; isPaused = true;
     dragStartX = e.pageX; dragStartOff = offset;
     carWrap.classList.add('is-dragging');
@@ -192,6 +221,7 @@ idle(() => {
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     offset = wrap(dragStartOff + (dragStartX - e.pageX));
+    applyOffset();
   });
   document.addEventListener('mouseup', () => {
     if (!isDragging) return;
@@ -202,7 +232,7 @@ idle(() => {
 
   // Touch drag
   carWrap.addEventListener('touchstart', (e) => {
-    init();
+    init(); startRaf();
     dragStartX   = e.touches[0].pageX;
     dragStartY   = e.touches[0].pageY;
     dragStartOff = offset;
@@ -216,12 +246,15 @@ idle(() => {
     if (!isHorizDrag) return;
     isDragging = true; isPaused = true;
     offset = wrap(dragStartOff - dx);
+    applyOffset(); // мгновенно обновляем трансформацию — палец = движение
   }, { passive: true });
 
   carWrap.addEventListener('touchend', () => {
     isDragging  = false;
     isHorizDrag = null;
     isPaused    = clickPaused;
+    // Возобновляем авто-скролл после свайпа (если он был на паузе)
+    if (isVisible && !document.hidden) startRaf();
   });
 
   carWrap.addEventListener('click', () => {
