@@ -1290,7 +1290,7 @@
       <div class="index reveal">— II<small>Услуги</small></div>
       <h2 class="reveal d1">Что мы <span class="it">починим и подгоним.</span></h2>
     </div>
-    <ul class="svc-list">
+    <ul class="svc-list" id="svc-list" data-source="data/services.json">
       <li class="svc reveal d1">
         <div class="svc-num">— 01</div>
         <div class="svc-name">Укоротить</div>
@@ -1560,6 +1560,36 @@
     </div>
   </div>
 </footer>
+
+<script>
+  // Re-render services from data/services.json (static HTML above остаётся для SEO).
+  (function () {
+    var ul = document.getElementById('svc-list');
+    if (!ul) return;
+    fetch('data/services.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (items) {
+        if (!Array.isArray(items) || !items.length) return;
+        var delays = ['d1','d2','d3','d4','d1','d2','d3','d4'];
+        var esc = function (s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+          });
+        };
+        var html = items.map(function (it, i) {
+          var hl = it.highlight ? ' <em style="font-style:italic;color:var(--gold)">' + esc(it.highlight) + '</em>' : '';
+          return '<li class="svc reveal ' + (delays[i] || 'd1') + '">' +
+                   '<div class="svc-num">— ' + esc(it.id) + '</div>' +
+                   '<div class="svc-name">' + esc(it.name) + hl + '</div>' +
+                   '<div class="svc-desc">' + esc(it.description) + '</div>' +
+                   '<div class="svc-arrow">→</div>' +
+                 '</li>';
+        }).join('');
+        ul.innerHTML = html;
+      })
+      .catch(function () { /* offline / file:// — оставляем статический HTML */ });
+  })();
+</script>
 
 </body>
 </html>

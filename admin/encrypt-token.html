@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Шифрование GitHub PAT — Ателье Инари</title>
+<style>
+  :root {
+    --ink: #1c1917;
+    --milk: #f5f0e8;
+    --gold: #b8963e;
+    --border: #d8d2c4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--milk);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  h1 {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 500;
+    font-size: 32px;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .sub { opacity: .7; margin-bottom: 28px; }
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: .75;
+  }
+  input, textarea {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fafaf7;
+    color: var(--ink);
+  }
+  input:focus, textarea:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+  textarea { min-height: 120px; resize: vertical; word-break: break-all; }
+  .row { margin-bottom: 18px; }
+  button {
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 500;
+    background: var(--ink);
+    color: var(--milk);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { background: #000; }
+  button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+  .result { display: none; }
+  .result.show { display: block; }
+  .ok { color: #2e7d32; font-weight: 500; margin-top: 12px; }
+  ol { padding-left: 22px; }
+  ol li { margin-bottom: 10px; }
+  code { background: #f0ebe1; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Шифрование GitHub-токена</h1>
+  <p class="sub">Запустите эту страницу один раз локально (или просто откройте в браузере). Введите PAT и придумайте пароль для клиентки — получите строку, которую нужно вставить в <code>admin/config.js</code>.</p>
+
+  <div class="card">
+    <div class="row">
+      <label for="token">GitHub Personal Access Token</label>
+      <input id="token" type="text" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" />
+    </div>
+    <div class="row">
+      <label for="password">Пароль для клиентки</label>
+      <input id="password" type="text" placeholder="например: ромашка123" autocomplete="off" />
+    </div>
+    <button id="encrypt-btn">Зашифровать</button>
+  </div>
+
+  <div class="card result" id="result">
+    <label>Зашифрованная строка — скопируйте её в <code>admin/config.js</code> → <code>encryptedToken</code></label>
+    <textarea id="output" readonly></textarea>
+    <button class="secondary" id="copy-btn" style="margin-top: 12px;">Скопировать</button>
+    <div class="ok" id="copied" style="display:none;">Скопировано в буфер обмена</div>
+  </div>
+
+  <div class="card">
+    <label>Инструкция</label>
+    <ol>
+      <li>Создайте PAT на <code>github.com/settings/tokens</code> с правом <code>repo</code> (Contents: read/write для репозитория inari).</li>
+      <li>Вставьте PAT и пароль выше, нажмите «Зашифровать».</li>
+      <li>Скопируйте полученную строку и вставьте её в <code>admin/config.js</code> вместо <code>СЮДА_ВСТАВИТЬ_ЗАШИФРОВАННУЮ_СТРОКУ</code>.</li>
+      <li>Закоммитьте и запушьте <code>admin/config.js</code>.</li>
+      <li>Передайте клиентке <em>только пароль</em>. Адрес админки: <code>https://inari-atelier.ru/admin/</code></li>
+    </ol>
+  </div>
+</div>
+
+<script>
+  async function encryptToken(token, password) {
+    const enc = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
+    );
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+      keyMaterial,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt']
+    );
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv }, key, enc.encode(token)
+    );
+    return btoa(JSON.stringify({
+      v: 1,
+      salt: Array.from(salt),
+      iv: Array.from(iv),
+      data: Array.from(new Uint8Array(encrypted))
+    }));
+  }
+
+  document.getElementById('encrypt-btn').addEventListener('click', async () => {
+    const token = document.getElementById('token').value.trim();
+    const password = document.getElementById('password').value;
+    if (!token || !password) {
+      alert('Введите и токен, и пароль.');
+      return;
+    }
+    try {
+      const result = await encryptToken(token, password);
+      document.getElementById('output').value = result;
+      document.getElementById('result').classList.add('show');
+    } catch (e) {
+      alert('Ошибка: ' + e.message);
+    }
+  });
+
+  document.getElementById('copy-btn').addEventListener('click', async () => {
+    const out = document.getElementById('output');
+    try {
+      await navigator.clipboard.writeText(out.value);
+    } catch {
+      out.select();
+      document.execCommand('copy');
+    }
+    const ok = document.getElementById('copied');
+    ok.style.display = 'block';
+    setTimeout(() => { ok.style.display = 'none'; }, 2000);
+  });
+</script>
+</body>
+</html>

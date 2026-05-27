@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Админка — Ателье Инари</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+<!-- Экран входа -->
+<div id="login" class="screen screen-login">
+  <div class="login-card">
+    <h1>Ателье <em>Инари</em></h1>
+    <p class="sub">Управление сайтом</p>
+    <form id="login-form" autocomplete="off">
+      <label for="password">Введите пароль</label>
+      <input id="password" type="password" autocomplete="current-password" autofocus />
+      <button type="submit" class="btn-primary btn-block">Войти</button>
+      <div id="login-error" class="login-error" hidden>Неверный пароль</div>
+    </form>
+  </div>
+</div>
+
+<!-- Главный экран -->
+<div id="app" class="screen" hidden>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">Ателье <em>Инари</em> · админка</div>
+      <button id="logout" class="btn-ghost">Выйти</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="services">Услуги</button>
+    <button class="tab" data-tab="gallery">Галерея</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- УСЛУГИ -->
+    <section class="pane pane-services active" data-pane="services">
+      <div class="pane-head">
+        <h2>Услуги</h2>
+        <button id="svc-add" class="btn-primary">+ Добавить услугу</button>
+      </div>
+      <ul id="svc-list" class="svc-list"></ul>
+      <div class="pane-actions">
+        <button id="svc-save" class="btn-primary btn-large" disabled>Сохранить изменения</button>
+        <span class="dirty-hint" id="svc-dirty" hidden>Есть несохранённые изменения</span>
+      </div>
+    </section>
+
+    <!-- ГАЛЕРЕЯ -->
+    <section class="pane pane-gallery" data-pane="gallery" hidden>
+      <div class="pane-head">
+        <h2>Галерея</h2>
+        <label for="gal-upload" class="btn-primary as-label">+ Загрузить фото</label>
+        <input id="gal-upload" type="file" accept="image/jpeg,image/png,image/webp" multiple hidden />
+      </div>
+      <div id="gal-grid" class="gal-grid"></div>
+      <div class="pane-actions">
+        <button id="gal-save" class="btn-primary btn-large" disabled>Сохранить изменения</button>
+        <span class="dirty-hint" id="gal-dirty" hidden>Есть несохранённые изменения</span>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Модалка редактирования услуги -->
+<div id="svc-modal" class="modal" hidden>
+  <div class="modal-card">
+    <h3 id="svc-modal-title">Услуга</h3>
+    <form id="svc-form" autocomplete="off">
+      <label>Номер</label>
+      <input name="id" type="text" maxlength="3" placeholder="07" required />
+
+      <label>Название</label>
+      <input name="name" type="text" placeholder="Укоротить" required />
+
+      <label>Выделенное слово <span class="hint">(золотым курсивом — необязательно)</span></label>
+      <input name="highlight" type="text" placeholder="молнию" />
+
+      <label>Описание</label>
+      <textarea name="description" rows="4" required></textarea>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close>Отмена</button>
+        <button type="submit" class="btn-primary">Готово</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Подтверждение удаления -->
+<div id="confirm-modal" class="modal" hidden>
+  <div class="modal-card modal-confirm">
+    <h3 id="confirm-title">Удалить?</h3>
+    <p id="confirm-text">Действие нельзя отменить.</p>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" data-confirm-cancel>Отмена</button>
+      <button type="button" class="btn-danger" data-confirm-ok>Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay загрузки -->
+<div id="loading" class="overlay" hidden>
+  <div class="overlay-card">
+    <div class="spinner"></div>
+    <div class="overlay-text">Сохраняем…</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
