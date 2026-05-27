@@ -70,8 +70,9 @@ idle(() => {
   const carTrack = document.getElementById('carouselTrack');
   if (!carWrap || !carTrack) return;
 
-  // Имена файлов галереи (без расширения — пробуем .avif, fallback .webp)
-  const GALLERY = [
+  // Галерея загружается из data/gallery.json — формат: [{file, alt}, ...]
+  // Резервный список на случай ошибки fetch (например при открытии через file://).
+  const GALLERY_FALLBACK = [
     ['XXXL',      'Ателье Инари — работа мастерской'],
     ['XXXL (1)',  'Швейная машина мастерской'],
     ['XXXL (2)',  'Работа мастерской'],
@@ -93,23 +94,36 @@ idle(() => {
     ['XXXL (19)', 'Работа мастерской'],
     ['XXXL (20)', 'Работа мастерской'],
   ];
+  let GALLERY = GALLERY_FALLBACK;
+
+  async function loadGallery() {
+    try {
+      const res = await fetch('data/gallery.json', { cache: 'no-cache' });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length) {
+        GALLERY = data.map(g => [g.file, g.alt || '']);
+      }
+    } catch (_) { /* offline / file:// — используем fallback */ }
+  }
 
   function buildCarousel() {
     if (carTrack.children.length) return;
     const frag = document.createDocumentFragment();
     // Двойной набор для бесшовной петли
     for (let dup = 0; dup < 2; dup++) {
-      for (const [name, alt] of GALLERY) {
+      for (const item of GALLERY) {
+        const [name, alt] = Array.isArray(item) ? item : [item.file, item.alt || ''];
         const enc = encodeURIComponent(name);
-        const item = document.createElement('div');
-        item.className = 'car-item';
-        if (dup === 1) item.setAttribute('aria-hidden', 'true');
-        item.innerHTML =
+        const el = document.createElement('div');
+        el.className = 'car-item';
+        if (dup === 1) el.setAttribute('aria-hidden', 'true');
+        el.innerHTML =
           '<picture>' +
             `<source type="image/avif" srcset="${enc}.avif">` +
             `<img src="${enc}.webp" alt="${dup === 1 ? '' : alt}" loading="lazy" decoding="async" width="800" height="800">` +
           '</picture>';
-        frag.appendChild(item);
+        frag.appendChild(el);
       }
     }
     carTrack.appendChild(frag);
@@ -157,9 +171,20 @@ idle(() => {
     const w = carTrack.scrollWidth / 2;
     if (w > 0) halfW = w;
   }
+  // Запускаем загрузку JSON сразу — не ждём попадания в viewport.
+  const galleryReady = loadGallery();
+  let pendingInit = false;
   function init() {
-    if (inited) return;
-    inited = true;
+    if (inited || pendingInit) return;
+    pendingInit = true;
+    galleryReady.then(() => {
+      pendingInit = false;
+      if (inited) return;
+      inited = true;
+      finishInit();
+    });
+  }
+  function finishInit() {
     buildCarousel();
     // Layout пройден к этому моменту, но scrollWidth может вернуть 0
     // если первый кадр ещё не отрисован — пробуем повторно через RAF.
