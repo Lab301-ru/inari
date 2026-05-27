@@ -83,13 +83,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+async function enterApp() {
   const loginEl = document.getElementById('login');
   const appEl   = document.getElementById('app');
   loginEl.style.display = 'none';
   appEl.removeAttribute('hidden');
   appEl.style.display = 'block';
   window.scrollTo(0, 0);
-  showLoading('Загружаем данные…');
   showLoading('Загружаем данные…');
   try {
     await Promise.all([loadServices(), loadGallery()]);
