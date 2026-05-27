@@ -84,8 +84,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function enterApp() {
-  $('#login').hidden = true;
-  $('#app').hidden = false;
+  const loginEl = document.getElementById('login');
+  const appEl   = document.getElementById('app');
+  loginEl.style.display = 'none';
+  appEl.removeAttribute('hidden');
+  appEl.style.display = 'block';
+  window.scrollTo(0, 0);
   showLoading('Загружаем данные…');
   try {
     await Promise.all([loadServices(), loadGallery()]);
@@ -507,10 +511,15 @@ async function commitFiles(files, deletedPaths, message) {
 
 /* ───────── UI: loading + toast ───────── */
 function showLoading(text) {
-  $('#loading .overlay-text').textContent = text || 'Сохраняем…';
-  $('#loading').hidden = false;
+  const el = document.getElementById('loading');
+  if (!el) return;
+  el.querySelector('.overlay-text').textContent = text || 'Сохраняем…';
+  el.style.display = 'flex';
 }
-function hideLoading() { $('#loading').hidden = true; }
+function hideLoading() {
+  const el = document.getElementById('loading');
+  if (el) el.style.display = 'none';
+}
 
 let toastTimer = null;
 function toast(text, kind) {
