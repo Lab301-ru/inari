@@ -115,7 +115,8 @@ idle(() => {
       for (const item of GALLERY) {
         const name   = Array.isArray(item) ? item[0] : item.file;
         const alt    = Array.isArray(item) ? (item[1] || '') : (item.alt || '');
-        const noavif = Array.isArray(item) ? false : !!item.noavif;
+        const flag   = Array.isArray(item) ? false : !!item.noavif;
+        const noavif = flag || /^photo-/.test(name);
         const enc = encodeURIComponent(name);
         const el = document.createElement('div');
         el.className = 'car-item';
