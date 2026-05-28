@@ -274,7 +274,8 @@ $('#gal-upload').addEventListener('change', async (e) => {
   showLoading('Конвертация в WebP…');
   try {
     for (const file of files) {
-      const { dataUrl, blob } = await convertToWebP(file);
+      const prepared = await maybeDecodeHeic(file);
+      const { dataUrl, blob } = await convertToWebP(prepared);
       const name = `photo-${Date.now()}-${Math.floor(Math.random()*9000+1000)}`;
       state.gallery.push({
         file: name,
@@ -292,6 +293,18 @@ $('#gal-upload').addEventListener('change', async (e) => {
     hideLoading();
   }
 });
+
+async function maybeDecodeHeic(file) {
+  const isHeic = /\.(heic|heif)$/i.test(file.name) ||
+                 file.type === 'image/heic' || file.type === 'image/heif';
+  if (!isHeic) return file;
+  if (typeof window.heic2any !== 'function') {
+    throw new Error('HEIC-конвертер не загрузился (нет интернета?)');
+  }
+  const out = await window.heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+  const jpegBlob = Array.isArray(out) ? out[0] : out;
+  return new File([jpegBlob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), { type: 'image/jpeg' });
+}
 
 async function convertToWebP(file) {
   const url = URL.createObjectURL(file);
