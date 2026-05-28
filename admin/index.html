@@ -60,7 +60,7 @@
       <div class="pane-head">
         <h2>Галерея</h2>
         <label for="gal-upload" class="btn-primary as-label">+ Загрузить фото</label>
-        <input id="gal-upload" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple hidden />
+        <input id="gal-upload" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif" multiple hidden />
       </div>
       <div id="gal-grid" class="gal-grid"></div>
       <div class="pane-actions">
@@ -120,6 +120,7 @@
 <!-- Toast -->
 <div id="toast" class="toast" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="config.js"></script>
 <script src="admin.js"></script>
 </body>
