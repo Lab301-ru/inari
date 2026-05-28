@@ -129,7 +129,7 @@ async function loadGallery() {
   const r = await fetch('../data/gallery.json?t=' + Date.now());
   if (!r.ok) throw new Error('gallery.json: ' + r.status);
   const data = await r.json();
-  state.gallery     = data.map(g => ({ file: g.file, alt: g.alt || '' }));
+  state.gallery     = data.map(g => ({ file: g.file, alt: g.alt || '', noavif: !!g.noavif }));
   state.galleryOrig = deepClone(state.gallery);
 }
 const deepClone = (x) => JSON.parse(JSON.stringify(x));
@@ -279,6 +279,7 @@ $('#gal-upload').addEventListener('change', async (e) => {
       state.gallery.push({
         file: name,
         alt: 'Работа мастерской',
+        noavif: true,
         _isNew: true,
         _dataUrl: dataUrl,
         _blob: blob,
@@ -325,7 +326,7 @@ async function convertToWebP(file) {
 }
 
 function updateGalDirty() {
-  const clean = state.gallery.map(g => ({ file: g.file, alt: g.alt || '' }));
+  const clean = state.gallery.map(g => ({ file: g.file, alt: g.alt || '', noavif: !!g.noavif }));
   const dirty = JSON.stringify(clean) !== JSON.stringify(state.galleryOrig);
   $('#gal-save').disabled = !dirty;
   $('#gal-dirty').hidden = !dirty;
@@ -407,7 +408,11 @@ $('#gal-save').addEventListener('click', async () => {
         files.push({ path: `${g.file}.webp`, content: b64, encoding: 'base64' });
       }
     }
-    const cleanGallery = state.gallery.map(g => ({ file: g.file, alt: g.alt || '' }));
+    const cleanGallery = state.gallery.map(g => {
+      const o = { file: g.file, alt: g.alt || '' };
+      if (g.noavif) o.noavif = true;
+      return o;
+    });
     files.push({
       path: 'data/gallery.json',
       content: JSON.stringify(cleanGallery, null, 2) + '\n',

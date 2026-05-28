@@ -102,7 +102,7 @@ idle(() => {
       if (!res.ok) return;
       const data = await res.json();
       if (Array.isArray(data) && data.length) {
-        GALLERY = data.map(g => [g.file, g.alt || '']);
+        GALLERY = data.map(g => ({ file: g.file, alt: g.alt || '', noavif: !!g.noavif }));
       }
     } catch (_) { /* offline / file:// — используем fallback */ }
   }
@@ -113,14 +113,16 @@ idle(() => {
     // Двойной набор для бесшовной петли
     for (let dup = 0; dup < 2; dup++) {
       for (const item of GALLERY) {
-        const [name, alt] = Array.isArray(item) ? item : [item.file, item.alt || ''];
+        const name   = Array.isArray(item) ? item[0] : item.file;
+        const alt    = Array.isArray(item) ? (item[1] || '') : (item.alt || '');
+        const noavif = Array.isArray(item) ? false : !!item.noavif;
         const enc = encodeURIComponent(name);
         const el = document.createElement('div');
         el.className = 'car-item';
         if (dup === 1) el.setAttribute('aria-hidden', 'true');
         el.innerHTML =
           '<picture>' +
-            `<source type="image/avif" srcset="${enc}.avif">` +
+            (noavif ? '' : `<source type="image/avif" srcset="${enc}.avif">`) +
             `<img src="${enc}.webp" alt="${dup === 1 ? '' : alt}" loading="lazy" decoding="async" width="800" height="800">` +
           '</picture>';
         frag.appendChild(el);
